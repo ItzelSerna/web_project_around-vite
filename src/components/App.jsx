@@ -49,7 +49,7 @@ function App() {
     .then((cardsData) => {
       const normalizedCards = cardsData.map((card) => ({
         ...card,
-        likes: card.likes || [], // Asegura que `likes` siempre es un arreglo.
+        likes: card.likes || [], 
         owner: typeof card.owner === "string" ? { _id: card.owner } : card.owner, 
       }));
       console.log("Tarjetas normalizadas:", normalizedCards);
@@ -102,10 +102,6 @@ function App() {
   };
   
   function handleCardLike(card, isLiked) {
-    
-    console.log("Iniciando cambio de estado de like para la tarjeta:", card);
-    console.log("Estado actual de 'isLiked':", isLiked);
-  
     api.changeLikeCardStatus(card._id, isLiked)
       .then((updatedCard) => {
         setCards((prevCards) =>

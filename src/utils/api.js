@@ -65,9 +65,6 @@ const api = {
   
   changeLikeCardStatus(cardId, isLiked) {
     const method = isLiked ? "DELETE" : "PUT";
-    
-    console.log(`Enviando solicitud para cambiar el estado de like. Método: ${method}, ID de tarjeta: ${cardId}`);
-
     return fetch(`${BASE_URL}/cards/${cardId}/likes`, {
       method: method,
       headers: {

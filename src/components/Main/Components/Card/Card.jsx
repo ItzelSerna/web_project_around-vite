@@ -5,7 +5,7 @@ function Card({ card, onCardClick, onCardLike, onCardDelete }) {
   const currentUser = useContext(CurrentUserContext);
   const isOwner = card.owner?._id === currentUser?._id;
 
-  const isLiked = card.likes.some((like) => like._id === currentUser._id);
+  const isLiked = card.isLiked;
   
   const cardLikeButtonClassName = `card__like-button ${
     isLiked ? "card__like-button_active" : ""
@@ -16,10 +16,6 @@ function Card({ card, onCardClick, onCardLike, onCardDelete }) {
   }
 
   const handleLikeClick = () => {
-    
-    console.log("Se hizo clic en el botón de me gusta para la tarjeta:", card);
-    console.log("Estado actual de 'isLiked':", isLiked);
-  
     onCardLike(card, isLiked);
   };
 
@@ -48,7 +44,6 @@ function Card({ card, onCardClick, onCardLike, onCardDelete }) {
             className={cardLikeButtonClassName}
             onClick={handleLikeClick}
           ></button>
-          <div className="card__likes">{card.likes.length}</div>
         </div>
       </div>
     </div>
