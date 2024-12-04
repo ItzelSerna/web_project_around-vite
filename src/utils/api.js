@@ -58,12 +58,13 @@ const api = {
         return res.json();
       })
       .then((data) => {
+        console.log("Datos de las tarjetas desde la API:", data);
         return data;
       });
   },
-
+  
   changeLikeCardStatus(cardId, isLiked) {
-    const method = isLiked ? "PUT" : "DELETE";
+    const method = isLiked ? "DELETE" : "PUT";
     return fetch(`${BASE_URL}/cards/${cardId}/likes`, {
       method: method,
       headers: {
@@ -75,11 +76,7 @@ const api = {
           console.error(`Error al cambiar el estado de like: ${res.status}`);
           return Promise.reject(`Error: ${res.status}`);
         }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Datos de la tarjeta actualizada desde la API:", data);
-        return data;
+        return res.json(); // Devuelve la tarjeta actualizada del .
       });
   },
   

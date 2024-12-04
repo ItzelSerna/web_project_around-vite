@@ -61,6 +61,10 @@
   opacity: 0.6;
 }
 
+.card__delete-button_hiden {
+  display: none;
+}
+
 .card__container-likes {
   display: flex;
   flex-direction: column;

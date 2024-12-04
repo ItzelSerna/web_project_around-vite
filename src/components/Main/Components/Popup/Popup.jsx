@@ -3,7 +3,7 @@ import React from 'react';
 function Popup({ name, title, isOpen, onClose, children }) {
   return (
     <section
-      className={`popup popup_type_${name} ${isOpen ? 'popup_is-opened' : ''}`}
+      className={`popup popup_type_${name} ${isOpen ? "popup_is-opened" : ""}`}
     >
       <div className="popup__overlay" onClick={onClose}></div>
       <div className="popup__container">
@@ -12,7 +12,7 @@ function Popup({ name, title, isOpen, onClose, children }) {
           type="button"
           onClick={onClose}
         ></button>
-        <h2 className="popup__title">{title}</h2>
+        {title && <h2 className="popup__title">{title}</h2>}
         {children}
       </div>
     </section>

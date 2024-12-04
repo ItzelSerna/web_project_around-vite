@@ -1,187 +1,181 @@
-import React, { useState, useEffect } from "react";
-import api from "../utils/api";
-import { CurrentUserContext } from "../contexts/CurrentUserContext";
 import Header from "./Header/Header";
 import Main from "./Main/Main";
 import Footer from "./Footer/Footer";
-import Popup from "./Main/Components/Popup/Popup";
-import ImagePopup from "./Main/Components/Popup/ImagePopup/ImagePopup";
 import EditProfile from "./Main/Components/Popup/EditProfile/EditProfile";
 import EditAvatar from "./Main/Components/Popup/EditAvatar/EditAvatar";
-import NewCard from './Main/Components/Popup/NewCard/NewCard';
-import RemoveCard from './Main/Components/Popup/RemoveCard/RemoveCard';
+import NewCard from "./Main/Components/Popup/NewCard/NewCard";
+import RemoveCard from "./Main/Components/Popup/RemoveCard/RemoveCard";
+import { useState, useEffect } from "react";
+import { CurrentUserContext } from "../contexts/CurrentUserContext";
+import api from "../utils/api";
 
 function App() {
-  const [popup, setPopup] = useState(null);
-  const [currentUser, setCurrentUser] = useState({});
+  const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
+  const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
+  const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
+  const [isRemoveCardPopupOpen, setIsRemoveCardPopupOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [currentUser, setCurrentUser] = useState({
+    name: "",
+    about: "",
+    avatar: "",
+    userId: "",
+    _id: "",
+  });  
+  
   const [cards, setCards] = useState([]);
-  const [cardToDelete, setCardToDelete] = useState(null);
+  const [deletedCard, setDeletedCard] = useState(null);
 
   useEffect(() => {
     api
       .getUserInfo()
-      .then((userData) => {
+      .then((info) => {
+        const userData = {
+          name: info.name,
+          about: info.about,
+          avatar: info.avatar,
+          userId: info._id,
+          _id: info._id,
+        };
+        console.log("Datos del usuario recibidos desde la API:", userData);
         setCurrentUser(userData);
       })
       .catch((err) =>
         console.error(`Error al cargar los datos de usuario: ${err}`)
       );
-  }, []);
-
-  useEffect(() => {
-    if (!currentUser._id) return; 
   
     api
-      .getCards()
-      .then((cardsData) => {
-        const normalizedCards = cardsData.map((card) => ({
-          ...card,
-          likes: card.likes || [],
-        }));
-        setCards(normalizedCards);
-      })
-      .catch((err) => console.error(`Error al obtener las tarjetas: ${err}`));
-  }, [currentUser]);  
-
-  const handleOpenPopup = (popupType) => {
-    setPopup(popupType);
+    .getCards()
+    .then((cardsData) => {
+      const normalizedCards = cardsData.map((card) => ({
+        ...card,
+        likes: card.likes || [], 
+        owner: typeof card.owner === "string" ? { _id: card.owner } : card.owner, 
+      }));
+      console.log("Tarjetas normalizadas:", normalizedCards);
+      setCards(normalizedCards);
+    })
+    .catch((err) => console.error(`Error al obtener las tarjetas: ${err}`));
+  }, []);
+  
+  const handleEditAvatarClick = () => setIsEditAvatarPopupOpen(true);
+  const handleEditProfileClick = () => setIsEditProfilePopupOpen(true);
+  const handleAddPlaceClick = () => setIsAddPlacePopupOpen(true);
+  
+  const handleRemoveCardClick = (card) => {
+    setDeletedCard(card); 
+    setIsRemoveCardPopupOpen(true);
   };
 
-  const handleClosePopup = () => {
-    setPopup(null);
+  const closeAllPopups = () => {
+    setIsEditAvatarPopupOpen(false);
+    setIsEditProfilePopupOpen(false);
+    setIsAddPlacePopupOpen(false);
+    setIsRemoveCardPopupOpen(false);
     setSelectedCard(null);
-  };
-
-  const handleOverlayClick = (e) => {
-    if (e.target.classList.contains("popup__overlay")) {
-      handleClosePopup();
-    }
+    setDeletedCard(null);
   };
 
   const handleUpdateUser = async (userData) => {
     try {
-      const updatedUserData = await api.setUserInfo(userData);
-      setCurrentUser(updatedUserData);
-      handleClosePopup();
+      const updatedUser = await api.setUserInfo(userData);
+      setCurrentUser(updatedUser);
+      closeAllPopups();
     } catch (err) {
-      console.error(`Error al actualizar los datos: ${err}`);
+      console.error(err);
     }
   };
 
-  const handleUpdateAvatar = async (data) => {
+  const handleUpdateAvatar = async (avatarData) => {
     try {
-      const updatedUserData = await api.setUserAvatar(data);
-      setCurrentUser(updatedUserData);
-      handleClosePopup();
+      const updatedUser = await api.setUserAvatar(avatarData);
+      setCurrentUser(updatedUser);
+      closeAllPopups();
     } catch (err) {
-      console.error(`Error al actualizar el avatar: ${err}`);
+      console.error(err);
     }
   };
 
-  const handleCardLike = async (card) => {
-    const isLiked = card.likes ? card.likes.some((like) => like === currentUser._id) : false;
+  const handleCardClick = (card) => {
+    console.log("Tarjeta seleccionada:", card);
+    setSelectedCard(card);
+  };
+  
+  function handleCardLike(card, isLiked) {
+    api.changeLikeCardStatus(card._id, isLiked)
+      .then((updatedCard) => {
+        setCards((prevCards) =>
+          prevCards.map((c) => (c._id === updatedCard._id ? updatedCard : c))
+        );
+      })
+      .catch((err) => console.error("Error al actualizar el like:", err));
+  }
+  
+  const handleAddPlaceSubmit = (cardData) => {
+    api.addCard(cardData)
+      .then((newCard) => {
+        const normalizedCard = {
+          ...newCard,
+          likes: newCard.likes || [], // Normaliza el campo `likes`.
+          owner: typeof newCard.owner === "string" ? { _id: newCard.owner } : newCard.owner,
+        };
+  
+        setCards([normalizedCard, ...cards]);
+        closeAllPopups();
+      })
+      .catch((err) => console.error("Error al agregar la tarjeta:", err));
+  };
+  
+
+  const handleCardDelete = async () => {
     try {
-      const newCard = await api.changeLikeCardStatus(card._id, !isLiked);
-      setCards((state) =>
-        state.map((currentCard) =>
-          currentCard._id === card._id ? newCard : currentCard
-        )
+      await api.deleteCard(deletedCard._id); 
+      setCards((prevCards) =>
+        prevCards.filter((c) => c._id !== deletedCard._id) 
       );
+      closeAllPopups();
     } catch (err) {
-      console.error(`Error al actualizar el estado de "me gusta": ${err}`);
+      console.error(err);
     }
-  };  
-
-  const handleCardDelete = (card) => {
-    setCardToDelete(card);
-    handleOpenPopup('confirm-delete');
   };
-
-  const handleConfirmDelete = async () => {
-    try {
-      await api.deleteCard(cardToDelete._id);
-      setCards((state) =>
-        state.filter((currentCard) => currentCard._id !== cardToDelete._id)
-      );
-      setCardToDelete(null);
-      handleClosePopup();
-    } catch (err) {
-      console.error(`Error al eliminar tarjeta: ${err}`);
-    }
-  };  
-
-  const handleAddPlaceSubmit = async (newCardData) => {
-    try {
-      const newCard = await api.addCard(newCardData);
-      setCards([newCard, ...cards]);
-      handleClosePopup();
-    } catch (err) {
-      console.error(`Error al agregar tarjeta: ${err}`);
-    }
-  };  
 
   return (
-    <CurrentUserContext.Provider value={{ currentUser, handleUpdateUser }}>
+    <CurrentUserContext.Provider value={currentUser}>
       <div className="page">
         <Header />
         <Main
           cards={cards}
+          onEditAvatarClick={handleEditAvatarClick}
+          onAddPlaceClick={handleAddPlaceClick}
+          onEditProfileClick={handleEditProfileClick}
+          onCardClick={handleCardClick}
           onCardLike={handleCardLike}
-          onCardDelete={handleCardDelete}
-          onCardClick={setSelectedCard}
-          onOpenPopup={handleOpenPopup}
+          onCardDelete={handleRemoveCardClick}
+          selectedCard={selectedCard}
+          onClose={closeAllPopups}
         />
-        {selectedCard && (
-          <div className="popup__overlay" onClick={handleOverlayClick}>
-            <ImagePopup card={selectedCard} onClose={handleClosePopup} />
-          </div>
-        )}
         <Footer />
-
-        {popup === "edit-profile" && (
-          <Popup
-            title="Edit profile"
-            name="edit-profile"
-            isOpen={!!popup}
-            onClose={handleClosePopup}
-            buttonText="Guardar"
-          >
-            <EditProfile onSubmit={handleUpdateUser} />
-          </Popup>
-        )}
-
-        {popup === "add-place" && (
-          <Popup
-            title="New place"
-            name="add-place"
-            isOpen={!!popup}
-            onClose={handleClosePopup}
-            buttonText="Crear"
-          >
-            <NewCard onSubmit={handleAddPlaceSubmit} />
-          </Popup>
-        )}
-
-        {popup === "edit-avatar" && (
-          <Popup
-            title="Change profile photo"
-            name="edit-avatar"
-            isOpen={!!popup}
-            onClose={handleClosePopup}
-            buttonText="Guardar"
-          >
-            <EditAvatar onSubmit={handleUpdateAvatar} />
-          </Popup>
-        )}
-
-        {popup === 'confirm-delete' && (
-          <RemoveCard
-            isOpen={popup === 'confirm-delete'}
-            onClose={handleClosePopup}
-            onConfirmDelete={handleConfirmDelete}
-          />
-        )}
+        {/* Popups */}
+        <EditProfile
+          isOpen={isEditProfilePopupOpen}
+          onClose={closeAllPopups}
+          onSubmit={handleUpdateUser}
+        />
+        <EditAvatar
+          isOpen={isEditAvatarPopupOpen}
+          onClose={closeAllPopups}
+          onSubmit={handleUpdateAvatar}
+        />
+        <NewCard
+          isOpen={isAddPlacePopupOpen}
+          onClose={closeAllPopups}
+          onSubmit={handleAddPlaceSubmit}
+        />
+        <RemoveCard
+          isOpen={isRemoveCardPopupOpen}
+          onClose={closeAllPopups}
+          onConfirmDelete={handleCardDelete}
+        />
       </div>
     </CurrentUserContext.Provider>
   );
