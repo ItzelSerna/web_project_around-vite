@@ -16,6 +16,10 @@ function Card({ card, onCardClick, onCardLike, onCardDelete }) {
   }
 
   const handleLikeClick = () => {
+    
+    console.log("Se hizo clic en el botón de me gusta para la tarjeta:", card);
+    console.log("Estado actual de 'isLiked':", isLiked);
+  
     onCardLike(card, isLiked);
   };
 
