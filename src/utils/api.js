@@ -76,7 +76,7 @@ const api = {
           console.error(`Error al cambiar el estado de like: ${res.status}`);
           return Promise.reject(`Error: ${res.status}`);
         }
-        return res.json(); // Devuelve la tarjeta actualizada del .
+        return res.json(); 
       });
   },
   

@@ -116,7 +116,7 @@ function App() {
       .then((newCard) => {
         const normalizedCard = {
           ...newCard,
-          likes: newCard.likes || [], // Normaliza el campo `likes`.
+          likes: newCard.likes || [],
           owner: typeof newCard.owner === "string" ? { _id: newCard.owner } : newCard.owner,
         };
   
